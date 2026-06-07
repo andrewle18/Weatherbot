@@ -65,17 +65,72 @@ def format_weather(d: dict, location_label: str) -> str:
     )
 
 def get_weather_by_city(city: str) -> str:
+    # Map common Vietnamese city names to English
+    vn_map = {
+        "hà nội": "Hanoi", "ha noi": "Hanoi",
+        "hồ chí minh": "Ho Chi Minh", "ho chi minh": "Ho Chi Minh",
+        "sài gòn": "Ho Chi Minh", "sai gon": "Ho Chi Minh", "saigon": "Ho Chi Minh",
+        "đà nẵng": "Da Nang", "da nang": "Da Nang",
+        "huế": "Hue", "hue": "Hue",
+        "cần thơ": "Can Tho", "can tho": "Can Tho",
+        "nha trang": "Nha Trang",
+        "đà lạt": "Da Lat", "da lat": "Da Lat", "dalat": "Da Lat",
+        "phú quốc": "Phu Quoc", "phu quoc": "Phu Quoc",
+        "sapa": "Sa Pa", "sa pa": "Sa Pa",
+        "hải phòng": "Hai Phong", "hai phong": "Hai Phong",
+        "vũng tàu": "Vung Tau", "vung tau": "Vung Tau",
+        "quảng ninh": "Quang Ninh", "quang ninh": "Quang Ninh",
+        "bình dương": "Binh Duong", "binh duong": "Binh Duong",
+        "đồng nai": "Dong Nai", "dong nai": "Dong Nai",
+        # Quận/huyện TPHCM
+        "quận 1": "Ho Chi Minh", "quan 1": "Ho Chi Minh", "q1": "Ho Chi Minh",
+        "quận 2": "Ho Chi Minh", "quan 2": "Ho Chi Minh", "q2": "Ho Chi Minh",
+        "quận 3": "Ho Chi Minh", "quan 3": "Ho Chi Minh", "q3": "Ho Chi Minh",
+        "quận 4": "Ho Chi Minh", "quan 4": "Ho Chi Minh", "q4": "Ho Chi Minh",
+        "quận 5": "Ho Chi Minh", "quan 5": "Ho Chi Minh", "q5": "Ho Chi Minh",
+        "quận 6": "Ho Chi Minh", "quan 6": "Ho Chi Minh", "q6": "Ho Chi Minh",
+        "quận 7": "Ho Chi Minh", "quan 7": "Ho Chi Minh", "q7": "Ho Chi Minh",
+        "quận 8": "Ho Chi Minh", "quan 8": "Ho Chi Minh", "q8": "Ho Chi Minh",
+        "quận 9": "Ho Chi Minh", "quan 9": "Ho Chi Minh", "q9": "Ho Chi Minh",
+        "quận 10": "Ho Chi Minh", "quan 10": "Ho Chi Minh", "q10": "Ho Chi Minh",
+        "quận 11": "Ho Chi Minh", "quan 11": "Ho Chi Minh", "q11": "Ho Chi Minh",
+        "quận 12": "Ho Chi Minh", "quan 12": "Ho Chi Minh", "q12": "Ho Chi Minh",
+        "thủ đức": "Thu Duc", "thu duc": "Thu Duc",
+        "bình thạnh": "Ho Chi Minh", "binh thanh": "Ho Chi Minh",
+        "tân bình": "Ho Chi Minh", "tan binh": "Ho Chi Minh",
+        "gò vấp": "Ho Chi Minh", "go vap": "Ho Chi Minh",
+        "phú nhuận": "Ho Chi Minh", "phu nhuan": "Ho Chi Minh",
+        "bình tân": "Ho Chi Minh", "binh tan": "Ho Chi Minh",
+        "tân phú": "Ho Chi Minh", "tan phu": "Ho Chi Minh",
+        "hóc môn": "Ho Chi Minh", "hoc mon": "Ho Chi Minh",
+        "củ chi": "Ho Chi Minh", "cu chi": "Ho Chi Minh",
+        "nhà bè": "Ho Chi Minh", "nha be": "Ho Chi Minh",
+        "bình chánh": "Ho Chi Minh", "binh chanh": "Ho Chi Minh",
+        "cần giờ": "Ho Chi Minh", "can gio": "Ho Chi Minh",
+    }
+    
+    city_en = vn_map.get(city.lower().strip(), city)
+    
     url = "https://api.openweathermap.org/data/2.5/weather"
-    params = {"q": city, "appid": OWM_API_KEY, "units": "metric", "lang": "vi"}
+    params = {"q": city_en, "appid": OWM_API_KEY, "units": "metric", "lang": "vi"}
     try:
         r = requests.get(url, params=params, timeout=10)
         if r.status_code == 404:
-            return f"❌ Không tìm thấy *{city}*.\nThử tên tiếng Anh: `Hanoi`, `Ho Chi Minh`, `Da Nang`..."
+            return (
+                f"❌ Không tìm thấy *{city}*.\n\n"
+                f"💡 *Thử:*\n"
+                f"• Tên tiếng Anh: `Hanoi`, `Ho Chi Minh`, `Da Nang`\n"
+                f"• Hoặc nhấn 📍 gửi vị trí GPS để chính xác nhất!\n"
+                f"Gõ /location để hiện nút GPS"
+            )
         if r.status_code == 401:
             return "❌ API key lỗi. Liên hệ admin."
         r.raise_for_status()
         d = r.json()
         label = f"{d['name']}, {d['sys']['country']}"
+        # If user searched by district, note that it's city-level data
+        if city_en != city and city_en == "Ho Chi Minh":
+            label += f"\n_(khu vực {city})_"
         return format_weather(d, label)
     except Exception as e:
         return f"❌ Lỗi: {str(e)}"
